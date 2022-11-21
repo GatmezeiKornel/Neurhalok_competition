@@ -1,5 +1,7 @@
 import os
 import numpy as np
+import time
+import matplotlib.pyplot as plt
 import torch
 import glob
 import torch.nn as nn
@@ -35,7 +37,7 @@ class ConvNet(nn.Module):
         self.bn3 = nn.BatchNorm2d(num_features=32)
         self.relu3 = nn.ReLU()
 
-        self.fc = nn.Linear(in_features=32*64*64, out_features=num_classes)
+        self.fc = nn.Linear(in_features=32 * 64 * 64, out_features=num_classes)
 
     def forward(self, input):
         output = self.conv1(input)
@@ -50,7 +52,7 @@ class ConvNet(nn.Module):
         output = self.conv3(output)
         output = self.bn3(output)
         output = self.relu3(output)
-        output = output.view(-1, 32*64*64)
+        output = output.view(-1, 32 * 64 * 64)
 
         output = self.fc(output)
 
@@ -92,6 +94,7 @@ if __name__ == "__main__":
     test_path = "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN"
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+    results = []
     transformer = preprocess()
     trainLoader, testLoader = dataLoader(train_path, test_path, transformer)
     categories = loadCategories(train_path)
@@ -104,6 +107,8 @@ if __name__ == "__main__":
     # print(train_count, test_count)
 
     best_accuracy = 0.0
+    startTime = time.time()
+    print("Starting phase")
 
     for epoch in range(num_epochs):
 
@@ -113,6 +118,10 @@ if __name__ == "__main__":
         train_loss = 0.0
 
         for i, (images, labels) in enumerate(trainLoader):
+            if torch.cuda.is_available():
+                images = Variable(images.cuda())
+                labels = Variable(labels.cuda())
+
             optimizer.zero_grad()
 
             outputs = model(images)
@@ -143,13 +152,15 @@ if __name__ == "__main__":
 
         test_accuracy = test_accuracy / test_count
 
-        print('Epoch: ' + str(epoch) + ' Train Loss: ' + str(train_loss) + ' Train Accuracy: ' + str(
-            train_accuracy) + ' Test Accuracy: ' + str(test_accuracy))
+        print('Training till this point took '+str(time.time()-startTime)+' Epoch: ' + str(epoch) + ' Train Loss: '
+              + str(train_loss) + ' Train Accuracy: ' + str(train_accuracy) + ' Test Accuracy: ' + str(test_accuracy))
 
+        results.append([float(train_accuracy), float(test_accuracy)])
         # Save the best model
         if test_accuracy > best_accuracy:
             torch.save(model.state_dict(), 'best_checkpoint.model')
             best_accuracy = test_accuracy
 
-
-
+    plt.plot(results[0], 'b')
+    plt.plot(results[1], 'r')
+    plt.show()
