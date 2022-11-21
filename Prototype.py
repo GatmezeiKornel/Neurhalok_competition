@@ -113,10 +113,6 @@ if __name__ == "__main__":
         train_loss = 0.0
 
         for i, (images, labels) in enumerate(trainLoader):
-            if torch.cuda.is_available():
-                images = Variable(images.cuda())
-                labels = Variable(labels.cuda())
-
             optimizer.zero_grad()
 
             outputs = model(images)
