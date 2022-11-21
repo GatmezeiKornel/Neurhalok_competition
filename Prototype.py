@@ -1,3 +1,4 @@
+import csv
 import os
 import numpy as np
 import time
@@ -5,10 +6,12 @@ import matplotlib.pyplot as plt
 import torch
 import glob
 import torch.nn as nn
+from PIL import Image
 from torchvision.transforms import transforms
 from torch.utils.data import DataLoader
 from torch.optim import Adam
 from torch.autograd import Variable
+from torchmetrics import Accuracy
 import torchvision
 import pathlib
 
@@ -62,7 +65,7 @@ class ConvNet(nn.Module):
 def preprocess():
     transformer = transforms.Compose([
         transforms.Resize((128, 128)),
-        transforms.RandomHorizontalFlip(),
+        # transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         transforms.Normalize([0.5, 0.5, 0.5],
                              [0.5, 0.5, 0.5]
@@ -89,22 +92,45 @@ def loadCategories(path):
     return classes
 
 
+def saveList(listToSave):
+    with open('Results.csv', 'w') as f:
+        write = csv.writer(f)
+        write.writerow(listToSave)
+
+
+def make_prediction(img_path, transformer, classes):
+    image = Image.open(img_path)
+    image_tensor = transformer(image).float()
+    image_tensor = image_tensor.unsqueeze_(0)
+    if torch.cuda.is_available():
+        image_tensor.cuda()
+    input = Variable(image_tensor)
+    output = model(input)
+    index = output.data.numpy().argmax()
+    pred = classes[index]
+    return pred
+
+
 if __name__ == "__main__":
     train_path = "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN"
     test_path = "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN"
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+    accuracy = Accuracy
     results = []
     transformer = preprocess()
     trainLoader, testLoader = dataLoader(train_path, test_path, transformer)
     categories = loadCategories(train_path)
     model = ConvNet(num_classes=len(categories)).to(device)
+    if os.path.exists('./best_checkpoint.model'):
+        checkpoint = torch.load('best_checkpoint.model')
+        model.load_state_dict(checkpoint)
     optimizer = Adam(model.parameters(), lr=0.001)
     loss_function = nn.CrossEntropyLoss()
     num_epochs = 10
     train_count = len(glob.glob(train_path + '/**/*.bmp'))
     test_count = len(glob.glob(test_path + '/**/*.bmp'))
-    # print(train_count, test_count)
+    print("Number of training datapoints: ", train_count, "\nNumber of testing datapoints: ", test_count)
 
     best_accuracy = 0.0
     startTime = time.time()
@@ -134,8 +160,8 @@ if __name__ == "__main__":
 
             train_accuracy += int(torch.sum(prediction == labels.data))
 
-        train_accuracy = train_accuracy / train_count
-        train_loss = train_loss / train_count
+        train_accuracy = train_accuracy #/ train_count
+        train_loss = train_loss #/ train_count
 
         # Evaluation on testing dataset
         model.eval()
@@ -149,18 +175,25 @@ if __name__ == "__main__":
             outputs = model(images)
             _, prediction = torch.max(outputs.data, 1)
             test_accuracy += int(torch.sum(prediction == labels.data))
-
+            # calc_acc = make_prediction(prediction, labels.data, categories)
+            # print(calc_acc)
         test_accuracy = test_accuracy / test_count
 
-        print('Training till this point took '+str(time.time()-startTime)+' Epoch: ' + str(epoch) + ' Train Loss: '
-              + str(train_loss) + ' Train Accuracy: ' + str(train_accuracy) + ' Test Accuracy: ' + str(test_accuracy))
 
+        print(
+            'Training till this point took ' + str(time.time() - startTime) + 'seconds Epoch: ' + str(epoch) + ' Train Loss: '
+            + str(train_loss) + ' Train Accuracy: ' + str(train_accuracy) + ' Test Accuracy: ' + str(test_accuracy))
+        print()
         results.append([float(train_accuracy), float(test_accuracy)])
         # Save the best model
         if test_accuracy > best_accuracy:
             torch.save(model.state_dict(), 'best_checkpoint.model')
             best_accuracy = test_accuracy
 
-    plt.plot(results[0], 'b')
-    plt.plot(results[1], 'r')
-    plt.show()
+    saveList(results)
+
+    predictions = {}
+    for i in glob.glob(test_path + '/*.bmp'):
+        predictions[i[i.rfind('/') + 1:]] = make_prediction(i, transformer, categories)
+
+    print(predictions)
