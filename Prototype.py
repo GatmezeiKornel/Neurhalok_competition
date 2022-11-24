@@ -110,6 +110,12 @@ def make_prediction(img_path, transformer, classes):
     pred = classes[index]
     return pred
 
+def calculate_accuracy(y_pred, y):
+    top_pred = y_pred.argmax(1, keepdim = True)
+    correct = top_pred.eq(y.view_as(top_pred)).sum()
+    acc = correct.float() / y.shape[0]
+    return acc
+
 
 if __name__ == "__main__":
     train_path = "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN"
@@ -127,14 +133,14 @@ if __name__ == "__main__":
         model.load_state_dict(checkpoint)
     optimizer = Adam(model.parameters(), lr=0.001)
     loss_function = nn.CrossEntropyLoss()
-    num_epochs = 10
+    num_epochs = 5
     train_count = len(glob.glob(train_path + '/**/*.bmp'))
     test_count = len(glob.glob(test_path + '/**/*.bmp'))
     print("Number of training datapoints: ", train_count, "\nNumber of testing datapoints: ", test_count)
 
     best_accuracy = 0.0
     startTime = time.time()
-    print("Starting phase")
+    print("Starting training phase")
 
     for epoch in range(num_epochs):
 
@@ -160,8 +166,10 @@ if __name__ == "__main__":
 
             train_accuracy += int(torch.sum(prediction == labels.data))
 
-        train_accuracy = train_accuracy #/ train_count
-        train_loss = train_loss #/ train_count
+        # print(train_accuracy, " ", train_count)
+        train_accuracy = train_accuracy / train_count
+        train_loss = train_loss / train_count
+
 
         # Evaluation on testing dataset
         model.eval()
@@ -186,9 +194,9 @@ if __name__ == "__main__":
         print()
         results.append([float(train_accuracy), float(test_accuracy)])
         # Save the best model
-        if test_accuracy > best_accuracy:
-            torch.save(model.state_dict(), 'best_checkpoint.model')
-            best_accuracy = test_accuracy
+        # if test_accuracy > best_accuracy:
+        #     torch.save(model.state_dict(), 'best_checkpoint.model')
+        #     best_accuracy = test_accuracy
 
     saveList(results)
 
