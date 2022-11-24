@@ -26,18 +26,18 @@ class ConvNet(nn.Module):
         self.conv1 = nn.Conv2d(in_channels=3, out_channels=12, kernel_size=3, stride=1, padding=1)
         # Change of shape (256,12,128,128)
         self.bn1 = nn.BatchNorm2d(num_features=12)
-        self.relu1 = nn.ReLU()
+        self.relu1 = nn.LeakyReLU()
         self.pool = nn.MaxPool2d(kernel_size=2)
         # Change of shape: (256,12,64,64)
 
         self.conv2 = nn.Conv2d(in_channels=12, out_channels=20, kernel_size=3, stride=1, padding=1)
         # Change of shape: (256,20,64,64)
-        self.relu2 = nn.ReLU()
+        self.relu2 = nn.LeakyReLU()
 
         self.conv3 = nn.Conv2d(in_channels=20, out_channels=32, kernel_size=3, stride=1, padding=1)
         # Change of shape: (256,32,64,64)
         self.bn3 = nn.BatchNorm2d(num_features=32)
-        self.relu3 = nn.ReLU()
+        self.relu3 = nn.LeakyReLU()
 
         self.fc = nn.Linear(in_features=32 * 64 * 64, out_features=num_classes)
 
@@ -64,22 +64,31 @@ class ConvNet(nn.Module):
 def preprocess():
     transformer = transforms.Compose([
         transforms.Resize((128, 128)),
-        # transforms.RandomHorizontalFlip(),
+        transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         transforms.Normalize([0.5, 0.5, 0.5],
                              [0.5, 0.5, 0.5]
                              )
     ])
-    return transformer
+    transformer2 = transforms.Compose([
+        transforms.Resize((128, 128)),
+        transforms.ToTensor(),
+        transforms.Normalize([0.5, 0.5, 0.5],
+                             [0.5, 0.5, 0.5]
+                             )
+    ])
+    return transformer, transformer2
 
 
-def dataLoader(train_path, test_path, transformer):
+def dataLoader(train_path, test_path, transformer, transformer2=None):
+    if transformer2 is None:
+        transformer2=transformer
     train_loader = DataLoader(
         torchvision.datasets.ImageFolder(train_path, transform=transformer)
         , batch_size=256, shuffle=True
     )
     test_loader = DataLoader(
-        torchvision.datasets.ImageFolder(test_path, transform=transformer)
+        torchvision.datasets.ImageFolder(test_path, transform=transformer2)
         # , batch_size=256, shuffle=True
     )
     return train_loader, test_loader
@@ -96,19 +105,6 @@ def saveList(listToSave):
         for item in listToSave:
             f.write("%s\n" % item)
         print("saving done")
-
-
-def make_prediction(img_path, transformer, classes):
-    image = Image.open(img_path)
-    image_tensor = transformer(image).float()
-    image_tensor = image_tensor.unsqueeze_(0)
-    if torch.cuda.is_available():
-        image_tensor.cuda()
-    input = Variable(image_tensor)
-    output = model(input)
-    index = output.data.numpy().argmax()
-    pred = classes[index]
-    return pred
 
 
 def calculate_accuracy(y_pred, y):
@@ -132,19 +128,19 @@ if __name__ == "__main__":
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     accuracy = Accuracy
-    transformer = preprocess()
-    trainLoader, testLoader = dataLoader(train_path, test_path, transformer)
+    transformer, transformer2 = preprocess()
+    trainLoader, testLoader = dataLoader(train_path, test_path, transformer, transformer2)
     categories = loadCategories(train_path)
     print(categories)
     model = ConvNet(num_classes=len(categories)).to(device)
     if os.path.exists('./best_checkpoint.model'):
         checkpoint = torch.load('best_checkpoint.model')
         model.load_state_dict(checkpoint)
-    optimizer = Adam(model.parameters(), lr=0.001)
+    optimizer = Adam(model.parameters(), lr=0.01)
     loss_function = nn.CrossEntropyLoss()
-    num_epochs = 5
-    train_count = len(glob.glob(train_path + '/**/*.bmp'))*2
-    test_count = len(glob.glob(test_path + '/**/*.bmp'))*2
+    num_epochs = 10
+    train_count = len(glob.glob(train_path + '/**/*.BMP'))*2
+    test_count = len(glob.glob(test_path + '/**/*.BMP'))*2
     print("Number of training datapoints: ", train_count, "\nNumber of testing datapoints: ", test_count)
 
     best_accuracy = 0.0
@@ -202,18 +198,9 @@ if __name__ == "__main__":
     print(textfile)
     saveList(textfile)
 
-
-
-
-
-
-
-
-
-
-
-
-
+    save = True
+    if True:
+        torch.save(model.state_dict(), 'best_checkpoint.model')
 
 
 
