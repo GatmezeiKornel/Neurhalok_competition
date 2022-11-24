@@ -8,7 +8,7 @@ import glob
 import torch.nn as nn
 from PIL import Image
 from torchvision.transforms import transforms
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 from torch.optim import Adam
 from torch.autograd import Variable
 from torchmetrics import Accuracy
@@ -77,7 +77,7 @@ def preprocess():
 def dataLoader(train_path, test_path, transformer):
     train_loader = DataLoader(
         torchvision.datasets.ImageFolder(train_path, transform=transformer)
-        , batch_size=256, shuffle=True
+
     )
     test_loader = DataLoader(
         torchvision.datasets.ImageFolder(test_path, transform=transformer)
@@ -110,6 +110,7 @@ def make_prediction(img_path, transformer, classes):
     pred = classes[index]
     return pred
 
+
 def calculate_accuracy(y_pred, y):
     top_pred = y_pred.argmax(1, keepdim = True)
     correct = top_pred.eq(y.view_as(top_pred)).sum()
@@ -119,7 +120,7 @@ def calculate_accuracy(y_pred, y):
 
 if __name__ == "__main__":
     train_path = "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN"
-    test_path = "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN"
+    test_path = "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TEST"
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     accuracy = Accuracy
@@ -169,34 +170,27 @@ if __name__ == "__main__":
         # print(train_accuracy, " ", train_count)
         train_accuracy = train_accuracy / train_count
         train_loss = train_loss / train_count
-
-
-        # Evaluation on testing dataset
-        model.eval()
-
-        test_accuracy = 0.0
-        for i, (images, labels) in enumerate(testLoader):
-            if torch.cuda.is_available():
-                images = Variable(images.cuda())
-                labels = Variable(labels.cuda())
-
-            outputs = model(images)
-            _, prediction = torch.max(outputs.data, 1)
-            test_accuracy += int(torch.sum(prediction == labels.data))
-            # calc_acc = make_prediction(prediction, labels.data, categories)
-            # print(calc_acc)
-        test_accuracy = test_accuracy / test_count
-
-
         print(
-            'Training till this point took ' + str(time.time() - startTime) + 'seconds Epoch: ' + str(epoch) + ' Train Loss: '
-            + str(train_loss) + ' Train Accuracy: ' + str(train_accuracy) + ' Test Accuracy: ' + str(test_accuracy))
-        print()
-        results.append([float(train_accuracy), float(test_accuracy)])
-        # Save the best model
-        # if test_accuracy > best_accuracy:
-        #     torch.save(model.state_dict(), 'best_checkpoint.model')
-        #     best_accuracy = test_accuracy
+            'Training till this point took ' + str(int(time.time() - startTime)) + 'seconds Epoch: ' + str(
+                epoch) + ' Train Loss: ' + str(train_loss) + ' Train Accuracy: ' + str(train_accuracy) + "\n")
+
+    # Evaluation on testing dataset
+    model.eval()
+
+    test_accuracy = 0.0
+    for i, (images, labels) in enumerate(testLoader):
+
+        outputs = model(images)
+        _, prediction = torch.max(outputs.data, 1)
+        test_accuracy += int(torch.sum(prediction == labels.data))
+
+    test_accuracy = test_accuracy / test_count
+
+    results.append([float(train_accuracy), float(test_accuracy)])
+    # Save the best model
+    # if test_accuracy > best_accuracy:
+    #     torch.save(model.state_dict(), 'best_checkpoint.model')
+    #     best_accuracy = test_accuracy
 
     saveList(results)
 
