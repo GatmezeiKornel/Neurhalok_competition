@@ -92,9 +92,10 @@ def loadCategories(path):
 
 
 def saveList(listToSave):
-    with open('Results.csv', 'w') as f:
-        write = csv.writer(f)
-        write.writerow(listToSave)
+    with open('Results.txt', 'w') as f:
+        for item in listToSave:
+            f.write("%s\n" % item)
+        print("saving done")
 
 
 def make_prediction(img_path, transformer, classes):
@@ -117,25 +118,33 @@ def calculate_accuracy(y_pred, y):
     return acc
 
 
+def convertCat(cat):
+    conversion = {
+        0:'chl_1', 1:'chl_2', 2:'chl_3', 3:'chl_4', 4:'chl_8', 5:'chl_multi', 6:'debr', 7:'sp'
+    }
+    cat = conversion[cat]
+    return cat
+
+
 if __name__ == "__main__":
     train_path = "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN"
     test_path = "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TEST_BMP"
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     accuracy = Accuracy
-    results = []
     transformer = preprocess()
     trainLoader, testLoader = dataLoader(train_path, test_path, transformer)
     categories = loadCategories(train_path)
+    print(categories)
     model = ConvNet(num_classes=len(categories)).to(device)
     if os.path.exists('./best_checkpoint.model'):
         checkpoint = torch.load('best_checkpoint.model')
         model.load_state_dict(checkpoint)
     optimizer = Adam(model.parameters(), lr=0.001)
     loss_function = nn.CrossEntropyLoss()
-    num_epochs = 1
-    train_count = len(glob.glob(train_path + '/**/*.bmp'))
-    test_count = len(glob.glob(test_path + '/**/*.bmp'))
+    num_epochs = 10
+    train_count = len(glob.glob(train_path + '/**/*.bmp'))*2
+    test_count = len(glob.glob(test_path + '/**/*.bmp'))*2
     print("Number of training datapoints: ", train_count, "\nNumber of testing datapoints: ", test_count)
 
     best_accuracy = 0.0
@@ -144,7 +153,6 @@ if __name__ == "__main__":
 
     for epoch in range(num_epochs):
 
-        # Evaluation and training on training dataset
         model.train()
         train_accuracy = 0.0
         train_loss = 0.0
@@ -167,8 +175,8 @@ if __name__ == "__main__":
             train_accuracy += int(torch.sum(prediction == labels.data))
 
         # print(train_accuracy, " ", train_count)
-        train_accuracy = train_accuracy / (train_count*2)
-        train_loss = train_loss / (train_count*2)
+        train_accuracy = train_accuracy / train_count
+        train_loss = train_loss / train_count
         print(
             'Training till this point took ' + str(int(time.time() - startTime)) + ' seconds Epoch: ' + str(
                 epoch) + ' Train Loss: ' + str(train_loss) + ' Train Accuracy: ' + str(train_accuracy) + "\n")
@@ -176,27 +184,44 @@ if __name__ == "__main__":
     # Evaluation on testing dataset
     model.eval()
     result = []
-    test_accuracy = 0.0
+
     for i, (images, labels) in enumerate(testLoader):
-
+        # Old version
         outputs = model(images)
-        _, prediction = torch.max(outputs.data, 1)
-        preds = prediction.cpu().numpy()
-        print(i)
-        print(preds)
-        result.append([i, preds])
-        # test_accuracy += int(torch.sum(prediction == labels.data))
+        prediction = outputs.data.cpu().numpy().argmax()
+        result.append(prediction)
 
-    # test_accuracy = test_accuracy / test_count
+    saveList(result)
+    path = test_path+"/TEST"
+    filelist = os.listdir(path)
+    textfile = []
+    textfile.append("Id,Category")
+    for i in range(len(result)):
+        line = str(filelist[i])+", "+str(convertCat(result[i]))
+        textfile.append(line)
+    print(textfile)
+    saveList(textfile)
 
-    # results.append([float(train_accuracy), float(test_accuracy)])
-    # Save the best model
-    # if test_accuracy > best_accuracy:
-    #     torch.save(model.state_dict(), 'best_checkpoint.model')
-    #     best_accuracy = test_accuracy
 
-    saveList(results)
 
-    # predictions = {}
-    # for i in glob.glob(test_path + '/*.bmp'):
-    #     predictions[i[i.rfind('/') + 1:]] = make_prediction(i, transformer, categories)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
