@@ -2,7 +2,6 @@ import csv
 import os
 import numpy as np
 import time
-import matplotlib.pyplot as plt
 import torch
 import glob
 import torch.nn as nn
@@ -77,11 +76,11 @@ def preprocess():
 def dataLoader(train_path, test_path, transformer):
     train_loader = DataLoader(
         torchvision.datasets.ImageFolder(train_path, transform=transformer)
-
+        , batch_size=256, shuffle=True
     )
     test_loader = DataLoader(
         torchvision.datasets.ImageFolder(test_path, transform=transformer)
-        , batch_size=256, shuffle=True
+        # , batch_size=256, shuffle=True
     )
     return train_loader, test_loader
 
@@ -120,7 +119,7 @@ def calculate_accuracy(y_pred, y):
 
 if __name__ == "__main__":
     train_path = "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN"
-    test_path = "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TEST"
+    test_path = "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TEST_BMP"
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     accuracy = Accuracy
@@ -134,7 +133,7 @@ if __name__ == "__main__":
         model.load_state_dict(checkpoint)
     optimizer = Adam(model.parameters(), lr=0.001)
     loss_function = nn.CrossEntropyLoss()
-    num_epochs = 5
+    num_epochs = 1
     train_count = len(glob.glob(train_path + '/**/*.bmp'))
     test_count = len(glob.glob(test_path + '/**/*.bmp'))
     print("Number of training datapoints: ", train_count, "\nNumber of testing datapoints: ", test_count)
@@ -168,25 +167,29 @@ if __name__ == "__main__":
             train_accuracy += int(torch.sum(prediction == labels.data))
 
         # print(train_accuracy, " ", train_count)
-        train_accuracy = train_accuracy / train_count
-        train_loss = train_loss / train_count
+        train_accuracy = train_accuracy / (train_count*2)
+        train_loss = train_loss / (train_count*2)
         print(
-            'Training till this point took ' + str(int(time.time() - startTime)) + 'seconds Epoch: ' + str(
+            'Training till this point took ' + str(int(time.time() - startTime)) + ' seconds Epoch: ' + str(
                 epoch) + ' Train Loss: ' + str(train_loss) + ' Train Accuracy: ' + str(train_accuracy) + "\n")
 
     # Evaluation on testing dataset
     model.eval()
-
+    result = []
     test_accuracy = 0.0
     for i, (images, labels) in enumerate(testLoader):
 
         outputs = model(images)
         _, prediction = torch.max(outputs.data, 1)
-        test_accuracy += int(torch.sum(prediction == labels.data))
+        preds = prediction.cpu().numpy()
+        print(i)
+        print(preds)
+        result.append([i, preds])
+        # test_accuracy += int(torch.sum(prediction == labels.data))
 
-    test_accuracy = test_accuracy / test_count
+    # test_accuracy = test_accuracy / test_count
 
-    results.append([float(train_accuracy), float(test_accuracy)])
+    # results.append([float(train_accuracy), float(test_accuracy)])
     # Save the best model
     # if test_accuracy > best_accuracy:
     #     torch.save(model.state_dict(), 'best_checkpoint.model')
@@ -194,8 +197,6 @@ if __name__ == "__main__":
 
     saveList(results)
 
-    predictions = {}
-    for i in glob.glob(test_path + '/*.bmp'):
-        predictions[i[i.rfind('/') + 1:]] = make_prediction(i, transformer, categories)
-
-    print(predictions)
+    # predictions = {}
+    # for i in glob.glob(test_path + '/*.bmp'):
+    #     predictions[i[i.rfind('/') + 1:]] = make_prediction(i, transformer, categories)
