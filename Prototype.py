@@ -101,7 +101,7 @@ def loadCategories(path):
 
 
 def saveList(listToSave):
-    with open('Results.csv', 'w') as f:
+    with open('submission.csv', 'w') as f:
         for item in listToSave:
             f.write("%s\n" % item)
         print("saving done")
@@ -138,7 +138,7 @@ if __name__ == "__main__":
         model.load_state_dict(checkpoint)
     optimizer = Adam(model.parameters(), lr=0.0001)
     loss_function = nn.CrossEntropyLoss()
-    num_epochs = 1
+    num_epochs = 2
     train_count = len(glob.glob(train_path + '/**/*.BMP'))*2
     test_count = len(glob.glob(test_path + '/**/*.BMP'))*2
     print("Number of training datapoints: ", train_count, "\nNumber of testing datapoints: ", test_count)
