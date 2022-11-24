@@ -142,7 +142,7 @@ if __name__ == "__main__":
         model.load_state_dict(checkpoint)
     optimizer = Adam(model.parameters(), lr=0.001)
     loss_function = nn.CrossEntropyLoss()
-    num_epochs = 10
+    num_epochs = 5
     train_count = len(glob.glob(train_path + '/**/*.bmp'))*2
     test_count = len(glob.glob(test_path + '/**/*.bmp'))*2
     print("Number of training datapoints: ", train_count, "\nNumber of testing datapoints: ", test_count)
@@ -197,7 +197,7 @@ if __name__ == "__main__":
     textfile = []
     textfile.append("Id,Category")
     for i in range(len(result)):
-        line = str(filelist[i])+", "+str(convertCat(result[i]))
+        line = str(filelist[i].split("_")[0])+", "+str(convertCat(result[i]))
         textfile.append(line)
     print(textfile)
     saveList(textfile)
