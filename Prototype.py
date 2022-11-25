@@ -5,6 +5,7 @@ import time
 import torch
 import glob
 import torch.nn as nn
+import matplotlib.pyplot as plt
 from PIL import Image
 from torchvision.transforms import transforms
 from torch.utils.data import DataLoader, Dataset, TensorDataset, random_split
@@ -18,42 +19,31 @@ import math
 class ConvNet(nn.Module):
     def __init__(self, num_classes=6):
         super(ConvNet, self).__init__()
-        # input shape:
-        # (256,3,128,128)
-        # output:
-        # (width-kernelsize+2*padding)/stride+1
-        # (128-3+2)+1
         self.conv1 = nn.Conv2d(in_channels=3, out_channels=12, kernel_size=3, stride=1, padding=1)
-        # Change of shape (256,12,128,128)
         self.bn1 = nn.BatchNorm2d(num_features=12)
-        self.relu1 = nn.LeakyReLU()
+        self.relu = nn.LeakyReLU()
         self.pool = nn.MaxPool2d(kernel_size=2)
-        # Change of shape: (256,12,64,64)
 
         self.conv2 = nn.Conv2d(in_channels=12, out_channels=20, kernel_size=3, stride=1, padding=1)
-        # Change of shape: (256,20,64,64)
-        self.relu2 = nn.LeakyReLU()
 
         self.conv3 = nn.Conv2d(in_channels=20, out_channels=32, kernel_size=3, stride=1, padding=1)
-        # Change of shape: (256,32,64,64)
         self.bn3 = nn.BatchNorm2d(num_features=32)
-        self.relu3 = nn.LeakyReLU()
 
         self.fc = nn.Linear(in_features=32 * 64 * 64, out_features=num_classes)
 
     def forward(self, input):
         output = self.conv1(input)
         output = self.bn1(output)
-        output = self.relu1(output)
-
+        output = self.relu(output)
         output = self.pool(output)
+        output = nn.Dropout(0.4)(output)
 
         output = self.conv2(output)
-        output = self.relu2(output)
+        output = self.relu(output)
 
         output = self.conv3(output)
         output = self.bn3(output)
-        output = self.relu3(output)
+        output = self.relu(output)
         output = output.view(-1, 32 * 64 * 64)
 
         output = self.fc(output)
@@ -130,9 +120,12 @@ def convertCat(cat):
     return cat
 
 
-def trainModel(model, num_epochs, train_count, train, val, val_count, startTime):
+def trainModel(model, num_epochs, train_count, train, val, val_count, startTime, loss):
+    trainlog = []
+    vallog = []
+    trainloss = []
+    valloss = []
     for epoch in range(num_epochs):
-
         model.train()
         train_accuracy = 0.0
         train_loss = 0.0
@@ -162,12 +155,14 @@ def trainModel(model, num_epochs, train_count, train, val, val_count, startTime)
         # print(train_accuracy, " ", train_count)
         train_accuracy = train_accuracy / train_count
         train_loss = train_loss / train_count
+        trainlog.append(train_accuracy)
+        trainloss.append(train_loss.item())
 
         for i, (images, labels) in enumerate(val):
             optimizer.zero_grad()
             outputs = model(images)
 
-            train_loss += loss.cpu().data * images.size(0)
+            val_loss += loss.cpu().data * images.size(0)
             _, prediction = torch.max(outputs.data, 1)
 
             val_acc += int(torch.sum(prediction == labels.data))
@@ -175,15 +170,23 @@ def trainModel(model, num_epochs, train_count, train, val, val_count, startTime)
         # print(train_accuracy, " ", train_count)
         val_acc = val_acc / val_count
         val_loss = val_loss / val_count
-
+        vallog.append(val_acc)
+        valloss.append(val_loss.item())
         if best_acc < val_acc:
             best_acc = val_acc
             torch.save(model.state_dict(), 'best_checkpoint.model')
 
         print(
-            'Training till this point took ' + str(int(time.time() - startTime)) + ' seconds Epoch: ' + str(
-                epoch) + ' Train Loss: ' + str(train_loss) + ' Train Accuracy: ' + str(train_accuracy) +
-            " Validation Accuracy: " + str(val_acc))
+            'Training till this point took ' + str(int(time.time() - startTime)) + ' seconds Epoch: ' + str(epoch)
+            + ' Train Loss: ' + str(train_loss.item()) +" Val_loss: "+str(val_loss.item()) +' Train Accuracy: ' + str(int(train_accuracy*100)) +
+            "% Validation Accuracy: " + str(int(val_acc*100))+"%")
+    plt.plot(trainlog)
+    plt.plot(vallog)
+    plt.show()
+
+    plt.plot(trainloss)
+    plt.plot(valloss)
+    plt.show()
 
 
 def predict(model, testloader, test_path):
@@ -230,13 +233,15 @@ if __name__ == "__main__":
     categories = loadCategories(train_path)
 
     train, val, train_count, val_count = trainValSplit(trainLoader)
-    loss_function = nn.CrossEntropyLoss()
+    # weightlist = [1, 10, 10, 10, 10, 10, 10, 10]
+    weightlist = [1, 6.6, 16.21, 9.216, 32.44, 42.685, 4.18, 4.53]
+    loss_function = nn.CrossEntropyLoss(torch.FloatTensor(weightlist))
     num_epochs = 10
     # train_count = len(glob.glob(train_path + '/**/*.BMP')) * 2
     # test_count = len(glob.glob(test_path + '/**/*.BMP')) * 2
 
     model = ConvNet(num_classes=len(categories)).to(device)
-    model = loadModel(model)
+    # model = loadModel(model)
     optimizer = Adam(model.parameters(), lr=0.001)
     # print("Number of training datapoints: ", train_count,
     # "\nNumber of testing datapoints: ", test_count)
@@ -244,7 +249,7 @@ if __name__ == "__main__":
     startTime = time.time()
     print("Starting training phase")
     # Train model
-    trainModel(model, num_epochs, train_count, trainLoader, val, val_count, startTime)
+    trainModel(model, num_epochs, train_count, trainLoader, val, val_count, startTime, loss_function)
 
     # Evaluation on testing dataset
     predict(model, testLoader, test_path)
