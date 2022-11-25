@@ -130,12 +130,17 @@ def convertCat(cat):
     return cat
 
 
-def trainModel(model, num_epochs, train_count, train, startTime):
+def trainModel(model, num_epochs, train_count, train, val, val_count, startTime):
     for epoch in range(num_epochs):
 
         model.train()
         train_accuracy = 0.0
         train_loss = 0.0
+
+        val_acc = 0.0
+        val_loss = 0.0
+
+        best_acc = 0.0
 
         for i, (images, labels) in enumerate(train):
             if torch.cuda.is_available():
@@ -157,9 +162,28 @@ def trainModel(model, num_epochs, train_count, train, startTime):
         # print(train_accuracy, " ", train_count)
         train_accuracy = train_accuracy / train_count
         train_loss = train_loss / train_count
+
+        for i, (images, labels) in enumerate(val):
+            optimizer.zero_grad()
+            outputs = model(images)
+
+            train_loss += loss.cpu().data * images.size(0)
+            _, prediction = torch.max(outputs.data, 1)
+
+            val_acc += int(torch.sum(prediction == labels.data))
+
+        # print(train_accuracy, " ", train_count)
+        val_acc = val_acc / val_count
+        val_loss = val_loss / val_count
+
+        if best_acc < val_acc:
+            best_acc = val_acc
+            torch.save(model.state_dict(), 'best_checkpoint.model')
+
         print(
             'Training till this point took ' + str(int(time.time() - startTime)) + ' seconds Epoch: ' + str(
-                epoch) + ' Train Loss: ' + str(train_loss) + ' Train Accuracy: ' + str(train_accuracy) + "\n")
+                epoch) + ' Train Loss: ' + str(train_loss) + ' Train Accuracy: ' + str(train_accuracy) +
+            " Validation Accuracy: " + str(val_acc))
 
 
 def predict(model, testloader, test_path):
@@ -183,18 +207,17 @@ def predict(model, testloader, test_path):
 
 
 def trainValSplit(input, split=0.1):
-    original=len(input.dataset)
+    original = len(input.dataset)
 
-    vallen = int(math.floor(original*split))
-    trainlen = int(original-vallen)
-    print("Origianal length ", len(trainLoader.dataset), " train: ",trainlen," Vallen: ",vallen )
+    vallen = int(math.floor(original * split))
+    trainlen = int(original - vallen)
+    print("Origianal length ", len(trainLoader.dataset), " train: ", trainlen, " Vallen: ", vallen)
 
-    # return random_split(input, [len(input)*1-split, len(input)*split],generator=torch.Generator().manual_seed(42))
     trn, val = random_split(input.dataset, [trainlen, vallen],
                             generator=torch.Generator().manual_seed(1))
     trn = DataLoader(trn)
     val = DataLoader(val)
-    return trn, val
+    return trn, val, trainlen, vallen
 
 
 if __name__ == "__main__":
@@ -206,24 +229,22 @@ if __name__ == "__main__":
     trainLoader, testLoader = dataLoader(train_path, test_path, transformer, transformer2)
     categories = loadCategories(train_path)
 
-    train, val = trainValSplit(trainLoader)
+    train, val, train_count, val_count = trainValSplit(trainLoader)
     loss_function = nn.CrossEntropyLoss()
     num_epochs = 10
-    train_count = len(glob.glob(train_path + '/**/*.BMP')) * 2
-    test_count = len(glob.glob(test_path + '/**/*.BMP')) * 2
+    # train_count = len(glob.glob(train_path + '/**/*.BMP')) * 2
+    # test_count = len(glob.glob(test_path + '/**/*.BMP')) * 2
 
     model = ConvNet(num_classes=len(categories)).to(device)
     model = loadModel(model)
-    optimizer = Adam(model.parameters(), lr=0.0001)
+    optimizer = Adam(model.parameters(), lr=0.001)
     # print("Number of training datapoints: ", train_count,
     # "\nNumber of testing datapoints: ", test_count)
-    print("Number of training points before splitting ", len(trainLoader.dataset))
-    print("Train set: ", len(train.dataset)," Validation set: ", len(trainLoader.dataset))
     best_accuracy = 0.0
     startTime = time.time()
     print("Starting training phase")
     # Train model
-    trainModel(model, num_epochs, train_count, trainLoader, startTime)
+    trainModel(model, num_epochs, train_count, trainLoader, val, val_count, startTime)
 
     # Evaluation on testing dataset
     predict(model, testLoader, test_path)
