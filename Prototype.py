@@ -12,6 +12,7 @@ from torch.optim import Adam
 from torch.autograd import Variable
 import torchvision
 import pathlib
+import math
 
 
 class ConvNet(nn.Module):
@@ -181,10 +182,19 @@ def predict(model, testloader, test_path):
     saveList(textfile)
 
 
-def trainValSplit(input, split=0.2):
-    print(len(input))
+def trainValSplit(input, split=0.1):
+    original=len(input.dataset)
+
+    vallen = int(math.floor(original*split))
+    trainlen = int(original-vallen)
+    print("Origianal length ", len(trainLoader.dataset), " train: ",trainlen," Vallen: ",vallen )
+
     # return random_split(input, [len(input)*1-split, len(input)*split],generator=torch.Generator().manual_seed(42))
-    return random_split(input, [10, 2], generator=torch.Generator().manual_seed(42))
+    trn, val = random_split(input.dataset, [trainlen, vallen],
+                            generator=torch.Generator().manual_seed(1))
+    trn = DataLoader(trn)
+    val = DataLoader(val)
+    return trn, val
 
 
 if __name__ == "__main__":
@@ -201,13 +211,14 @@ if __name__ == "__main__":
     num_epochs = 10
     train_count = len(glob.glob(train_path + '/**/*.BMP')) * 2
     test_count = len(glob.glob(test_path + '/**/*.BMP')) * 2
+
     model = ConvNet(num_classes=len(categories)).to(device)
     model = loadModel(model)
     optimizer = Adam(model.parameters(), lr=0.0001)
     # print("Number of training datapoints: ", train_count,
     # "\nNumber of testing datapoints: ", test_count)
-
-    print(type(train)," ",type(trainLoader))
+    print("Number of training points before splitting ", len(trainLoader.dataset))
+    print("Train set: ", len(train.dataset)," Validation set: ", len(trainLoader.dataset))
     best_accuracy = 0.0
     startTime = time.time()
     print("Starting training phase")
