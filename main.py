@@ -85,6 +85,29 @@ for filename in os.listdir(
             cv2.IMREAD_GRAYSCALE)
         # image_2 = cv.imread()
         tmp_all_images.append([image, "chl_1", filename])
+TEST_tmp = []
+TEST_all = []
+for filename in os.listdir(
+        "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TEST/TEST"):
+    with open(os.path.join(
+            "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TEST/TEST",
+            filename), 'r') as f:
+        image = cv.imread(
+            "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TEST/TEST/" + filename,
+            cv2.IMREAD_GRAYSCALE)
+        # image_2 = cv.imread()
+        TEST_tmp.append([image, filename])
+for i in range(0, len(TEST_tmp)):
+    if i % 2 == 0:
+        TEST_all.append([np.concatenate((TEST_tmp[i][0].reshape((128, 128, 1)),
+                                           TEST_tmp[i + 1][0].reshape((128, 128, 1)), np.zeros((128, 128, 1))),
+                                          axis=2) / 255, TEST_tmp[i][1].split('_')[0]])
+    else:
+        continue
+for i in range(0, len(TEST_all)):
+    actual_image_name = TEST_all[i][1]
+    r = cv2.imwrite("./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TEST_merged/" + actual_image_name + '.png', TEST_all[i][0] * 255)
+
 
 for i in range(0, len(tmp_all_images)):
     if i % 2 == 0:
@@ -96,7 +119,7 @@ for i in range(0, len(tmp_all_images)):
                                           axis=2) / 255, tmp_all_images[i][1], tmp_all_images[i][2].split('_')[0]])
     else:
         continue
-for i in range(0, len(all_images), 2):
+for i in range(0, len(all_images)):
     actual_image_name = all_images[i][2]
     r = cv2.imwrite("./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/" + all_images[i][1] + "/" + actual_image_name + '.png', all_images[i][0] * 255)
 
