@@ -18,6 +18,43 @@ import pathlib
 import math
 
 
+class VGG(nn.Module):
+    def __init__(self, vgg_name):
+        self.cfg = {
+            'VGG11': [64, 'M', 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
+            'VGG13': [64, 64, 'M', 128, 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
+            'VGG16': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512, 'M', 512, 512, 512, 'M'],
+            'VGG19': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 256, 'M', 512, 512, 512, 512, 'M', 512, 512, 512, 512,
+                      'M'],
+        }
+        super(VGG, self).__init__()
+        self.features = self._make_layers(self.cfg[vgg_name])
+        self.classifier = nn.Linear(512, 8)
+
+    def forward(self, x):
+        out = self.features(x)
+        out = out.view(out.size(0), -1)
+        out = self.classifier(out)
+        return out
+
+    # This method will generate us all of layers
+    # of VGG according to the cfg which now is
+    # a list of numbers and 'M' charachters
+    def _make_layers(self, cfg):
+        layers = []
+        in_channels = 2
+        for x in cfg:
+            if x == 'M':
+                layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
+            else:
+                layers += [nn.Conv2d(in_channels, x, kernel_size=3, padding=1),
+                           nn.BatchNorm2d(x),
+                           nn.ReLU(inplace=True)]
+                in_channels = x
+        layers.append(nn.AvgPool2d(kernel_size=1, stride=1))
+        return nn.Sequential(*layers)
+
+
 class ConvNet(nn.Module):
     def __init__(self, num_classes=6):
         super(ConvNet, self).__init__()
@@ -31,7 +68,12 @@ class ConvNet(nn.Module):
         self.conv3 = nn.Conv2d(in_channels=20, out_channels=32, kernel_size=3, stride=1, padding=1)
         self.bn3 = nn.BatchNorm2d(num_features=32)
 
-        self.fc = nn.Linear(in_features=32 * 64 * 64, out_features=num_classes)
+        self.fc = nn.Linear(in_features=32 * 64 * 64, out_features=64*64)
+        self.fc2 = nn.Linear(in_features=64*64, out_features=1024)
+        self.fc3 = nn.Linear(in_features=1024, out_features=512)
+        self.fc4 = nn.Linear(in_features=512, out_features=128)
+
+        self.fco = nn.Linear(in_features=128, out_features=num_classes)
 
     def forward(self, input):
         output = self.conv1(input)
@@ -49,27 +91,14 @@ class ConvNet(nn.Module):
         output = self.relu(output)
         output = torch.flatten(output, 1)
         output = output.view(-1, 32 * 64 * 64)
-
         output = self.fc(output)
+        output = self.fc2(output)
+        output = self.fc3(output)
+        output = self.fc4(output)
+        output = self.fco(output)
+
 
         return output
-    # def __init__(self, num_classes=6):
-    #     super().__init__()
-    #     self.conv1 = nn.Conv2d(3, 6, 8, 2)
-    #     self.pool = nn.MaxPool2d(2, 2)
-    #     self.conv2 = nn.Conv2d(6, 16, 8, 2)
-    #     self.fc1 = nn.Linear(16 * 6 * 6, 120)
-    #     self.fc2 = nn.Linear(120, 84)
-    #     self.fc3 = nn.Linear(84, num_classes)
-    #
-    # def forward(self, x):
-    #     x = self.pool(F.relu(self.conv1(x)))
-    #     x = self.pool(F.relu(self.conv2(x)))
-    #     x = torch.flatten(x, 1)  # flatten all dimensions except batch
-    #     x = F.relu(self.fc1(x))
-    #     x = F.relu(self.fc2(x))
-    #     x = self.fc3(x)
-    #     return x
 
 
 def preprocess():
@@ -257,7 +286,7 @@ if __name__ == "__main__":
     # weightlist = [1, 10, 10, 10, 10, 10, 10, 10]
     weightlist = [1, 6.6, 16.21, 9.216, 32.44, 42.685, 4.18, 4.53]
     loss_function = nn.CrossEntropyLoss(torch.FloatTensor(weightlist))
-    num_epochs = 12
+    num_epochs = 15
     # train_count = len(glob.glob(train_path + '/**/*.BMP')) * 2
     # test_count = len(glob.glob(test_path + '/**/*.BMP')) * 2
 
