@@ -5,7 +5,7 @@ import os
 tmp_all_images = []
 all_images = []
 for filename in os.listdir(
-        "c:/Users/kori/Documents/Egyetem/neurhalok/competition/ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN/sp"):
+        "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN/sp"):
     with open(os.path.join(
             "c:/Users/kori/Documents/Egyetem/neurhalok/competition/ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN/sp",
             filename), 'r') as f:
