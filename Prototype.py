@@ -179,6 +179,7 @@ def predict(model, testloader, test_path):
     print(textfile)
     saveList(textfile)
 
+
 if __name__ == "__main__":
     train_path = "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN"
     test_path = "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TEST_BMP"
@@ -188,9 +189,8 @@ if __name__ == "__main__":
     trainLoader, testLoader = dataLoader(train_path, test_path, transformer, transformer2)
     categories = loadCategories(train_path)
 
-
     loss_function = nn.CrossEntropyLoss()
-    num_epochs = 1
+    num_epochs = 10
     train_count = len(glob.glob(train_path + '/**/*.BMP')) * 2
     test_count = len(glob.glob(test_path + '/**/*.BMP')) * 2
     model = ConvNet(num_classes=len(categories)).to(device)
