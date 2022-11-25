@@ -306,7 +306,7 @@ if __name__ == "__main__":
     # weightlist = [1, 10, 10, 10, 10, 10, 10, 10]
     weightlist = [1, 6.6, 16.21, 9.216, 32.44, 42.685, 4.18, 4.53]
     loss_function = nn.CrossEntropyLoss(torch.FloatTensor(weightlist))
-    num_epochs = 100
+    num_epochs = 130
     # train_count = len(glob.glob(train_path + '/**/*.BMP')) * 2
     # test_count = len(glob.glob(test_path + '/**/*.BMP')) * 2
 
@@ -324,6 +324,6 @@ if __name__ == "__main__":
     # Evaluation on testing dataset
     predict(model, testLoader, test_path)
 
-    save = False
+    save = True
     if True:
         torch.save(model.state_dict(), 'best_checkpoint.model')
