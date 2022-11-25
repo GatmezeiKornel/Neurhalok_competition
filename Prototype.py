@@ -82,6 +82,7 @@ def preprocess():
 def dataLoader(train_path, test_path, transformer, transformer2=None):
     if transformer2 is None:
         transformer2 = transformer
+
     train_loader = DataLoader(
         torchvision.datasets.ImageFolder(train_path, transform=transformer)
         , batch_size=256, shuffle=True
