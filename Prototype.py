@@ -11,6 +11,8 @@ from torchvision.transforms import transforms
 from torch.utils.data import DataLoader, Dataset, TensorDataset, random_split
 from torch.optim import Adam
 from torch.autograd import Variable
+import torch.nn.functional as F
+
 import torchvision
 import pathlib
 import math
@@ -33,6 +35,7 @@ class ConvNet(nn.Module):
 
     def forward(self, input):
         output = self.conv1(input)
+
         output = self.bn1(output)
         output = self.relu(output)
         output = self.pool(output)
@@ -44,11 +47,29 @@ class ConvNet(nn.Module):
         output = self.conv3(output)
         output = self.bn3(output)
         output = self.relu(output)
+        output = torch.flatten(output, 1)
         output = output.view(-1, 32 * 64 * 64)
 
         output = self.fc(output)
 
         return output
+    # def __init__(self, num_classes=6):
+    #     super().__init__()
+    #     self.conv1 = nn.Conv2d(3, 6, 8, 2)
+    #     self.pool = nn.MaxPool2d(2, 2)
+    #     self.conv2 = nn.Conv2d(6, 16, 8, 2)
+    #     self.fc1 = nn.Linear(16 * 6 * 6, 120)
+    #     self.fc2 = nn.Linear(120, 84)
+    #     self.fc3 = nn.Linear(84, num_classes)
+    #
+    # def forward(self, x):
+    #     x = self.pool(F.relu(self.conv1(x)))
+    #     x = self.pool(F.relu(self.conv2(x)))
+    #     x = torch.flatten(x, 1)  # flatten all dimensions except batch
+    #     x = F.relu(self.fc1(x))
+    #     x = F.relu(self.fc2(x))
+    #     x = self.fc3(x)
+    #     return x
 
 
 def preprocess():
@@ -236,13 +257,13 @@ if __name__ == "__main__":
     # weightlist = [1, 10, 10, 10, 10, 10, 10, 10]
     weightlist = [1, 6.6, 16.21, 9.216, 32.44, 42.685, 4.18, 4.53]
     loss_function = nn.CrossEntropyLoss(torch.FloatTensor(weightlist))
-    num_epochs = 10
+    num_epochs = 12
     # train_count = len(glob.glob(train_path + '/**/*.BMP')) * 2
     # test_count = len(glob.glob(test_path + '/**/*.BMP')) * 2
 
     model = ConvNet(num_classes=len(categories)).to(device)
     # model = loadModel(model)
-    optimizer = Adam(model.parameters(), lr=0.001)
+    optimizer = Adam(model.parameters(), lr=0.005)
     # print("Number of training datapoints: ", train_count,
     # "\nNumber of testing datapoints: ", test_count)
     best_accuracy = 0.0
