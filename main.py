@@ -98,6 +98,6 @@ for i in range(0, len(tmp_all_images)):
         continue
 for i in range(0, len(all_images), 2):
     actual_image_name = all_images[i][2]
-    r = cv2.imwrite('./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/' + all_images[i][1] + "/" + actual_image_name + '.png', actual_image_name * 255)
+    r = cv2.imwrite('./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/' + all_images[i][1] + "/" + actual_image_name + '.png', all_images[i][0] * 255)
 
 print(all_images)
