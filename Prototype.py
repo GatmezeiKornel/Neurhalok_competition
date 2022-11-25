@@ -10,7 +10,6 @@ from torchvision.transforms import transforms
 from torch.utils.data import DataLoader, Dataset
 from torch.optim import Adam
 from torch.autograd import Variable
-from torchmetrics import Accuracy
 import torchvision
 import pathlib
 
@@ -82,7 +81,7 @@ def preprocess():
 
 def dataLoader(train_path, test_path, transformer, transformer2=None):
     if transformer2 is None:
-        transformer2=transformer
+        transformer2 = transformer
     train_loader = DataLoader(
         torchvision.datasets.ImageFolder(train_path, transform=transformer)
         , batch_size=256, shuffle=True
@@ -107,8 +106,15 @@ def saveList(listToSave):
         print("saving done")
 
 
+def loadModel(model):
+    if os.path.exists('./best_checkpoint.model'):
+        checkpoint = torch.load('best_checkpoint.model')
+        model.load_state_dict(checkpoint)
+    return model
+
+
 def calculate_accuracy(y_pred, y):
-    top_pred = y_pred.argmax(1, keepdim = True)
+    top_pred = y_pred.argmax(1, keepdim=True)
     correct = top_pred.eq(y.view_as(top_pred)).sum()
     acc = correct.float() / y.shape[0]
     return acc
@@ -116,37 +122,13 @@ def calculate_accuracy(y_pred, y):
 
 def convertCat(cat):
     conversion = {
-        0:'chl_1', 1:'chl_2', 2:'chl_3', 3:'chl_4', 4:'chl_8', 5:'chl_multi', 6:'debr', 7:'sp'
+        0: 'chl_1', 1: 'chl_2', 2: 'chl_3', 3: 'chl_4', 4: 'chl_8', 5: 'chl_multi', 6: 'debr', 7: 'sp'
     }
     cat = conversion[cat]
     return cat
 
 
-if __name__ == "__main__":
-    train_path = "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN"
-    test_path = "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TEST_BMP"
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-    accuracy = Accuracy
-    transformer, transformer2 = preprocess()
-    trainLoader, testLoader = dataLoader(train_path, test_path, transformer, transformer2)
-    categories = loadCategories(train_path)
-    print(categories)
-    model = ConvNet(num_classes=len(categories)).to(device)
-    if os.path.exists('./best_checkpoint.model'):
-        checkpoint = torch.load('best_checkpoint.model')
-        model.load_state_dict(checkpoint)
-    optimizer = Adam(model.parameters(), lr=0.0001)
-    loss_function = nn.CrossEntropyLoss()
-    num_epochs = 2
-    train_count = len(glob.glob(train_path + '/**/*.BMP'))*2
-    test_count = len(glob.glob(test_path + '/**/*.BMP'))*2
-    print("Number of training datapoints: ", train_count, "\nNumber of testing datapoints: ", test_count)
-
-    best_accuracy = 0.0
-    startTime = time.time()
-    print("Starting training phase")
-
+def trainModel(model, num_epochs, train_count, startTime):
     for epoch in range(num_epochs):
 
         model.train()
@@ -177,38 +159,55 @@ if __name__ == "__main__":
             'Training till this point took ' + str(int(time.time() - startTime)) + ' seconds Epoch: ' + str(
                 epoch) + ' Train Loss: ' + str(train_loss) + ' Train Accuracy: ' + str(train_accuracy) + "\n")
 
-    # Evaluation on testing dataset
+
+def predict(model, testloader, test_path):
     model.eval()
     result = []
-
-    for i, (images, labels) in enumerate(testLoader):
+    for i, (images, labels) in enumerate(testloader):
         # Old version
         outputs = model(images)
         prediction = outputs.data.cpu().numpy().argmax()
         result.append(prediction)
-
     saveList(result)
-    path = test_path+"/TEST"
+    path = test_path + "/TEST"
     filelist = os.listdir(path)
     textfile = []
     textfile.append("Id,Category")
     for i in range(len(result)):
-        line = str(filelist[i].split("_")[0])+", "+str(convertCat(result[i]))
+        line = str(filelist[i].split("_")[0]) + ", " + str(convertCat(result[i]))
         textfile.append(line)
     print(textfile)
     saveList(textfile)
 
+if __name__ == "__main__":
+    train_path = "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN"
+    test_path = "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TEST_BMP"
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    transformer, transformer2 = preprocess()
+    trainLoader, testLoader = dataLoader(train_path, test_path, transformer, transformer2)
+    categories = loadCategories(train_path)
+
+
+    loss_function = nn.CrossEntropyLoss()
+    num_epochs = 1
+    train_count = len(glob.glob(train_path + '/**/*.BMP')) * 2
+    test_count = len(glob.glob(test_path + '/**/*.BMP')) * 2
+    model = ConvNet(num_classes=len(categories)).to(device)
+    model = loadModel(model)
+    optimizer = Adam(model.parameters(), lr=0.0001)
+    # print("Number of training datapoints: ", train_count,
+    # "\nNumber of testing datapoints: ", test_count)
+
+    best_accuracy = 0.0
+    startTime = time.time()
+    print("Starting training phase")
+    # Train model
+    trainModel(model, num_epochs, train_count, startTime)
+
+    # Evaluation on testing dataset
+    predict(model, testLoader, test_path)
+
     save = True
     if True:
         torch.save(model.state_dict(), 'best_checkpoint.model')
-
-
-
-
-
-
-
-
-
-
-
