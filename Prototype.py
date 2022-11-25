@@ -187,7 +187,6 @@ def trainValSplit(input, split=0.2):
     return random_split(input, [10, 2], generator=torch.Generator().manual_seed(42))
 
 
-
 if __name__ == "__main__":
     train_path = "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN"
     test_path = "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TEST_BMP"
@@ -213,11 +212,11 @@ if __name__ == "__main__":
     startTime = time.time()
     print("Starting training phase")
     # Train model
-    trainModel(model, num_epochs, train_count, train, startTime)
+    trainModel(model, num_epochs, train_count, trainLoader, startTime)
 
     # Evaluation on testing dataset
     predict(model, testLoader, test_path)
 
-    save = True
+    save = False
     if True:
         torch.save(model.state_dict(), 'best_checkpoint.model')
