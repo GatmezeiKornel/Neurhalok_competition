@@ -18,8 +18,28 @@ import pathlib
 import math
 
 
+class Net(nn.Module):
+  def __init__(self, num_classes=8):
+      super().__init__()
+      self.conv1 = nn.Conv2d(3, 6, 8, 2)
+      self.pool = nn.MaxPool2d(2, 2)
+      self.conv2 = nn.Conv2d(6, 16, 8, 2)
+      self.fc1 = nn.Linear(16 * 6 * 6, 120)
+      self.fc2 = nn.Linear(120, 84)
+      self.fc3 = nn.Linear(84, num_classes)
+
+  def forward(self, x):
+      x = self.pool(F.relu(self.conv1(x)))
+      x = self.pool(F.relu(self.conv2(x)))
+      x = torch.flatten(x, 1) # flatten all dimensions except batch
+      x = F.relu(self.fc1(x))
+      x = F.relu(self.fc2(x))
+      x = self.fc3(x)
+      return x
+
+
 class VGG(nn.Module):
-    def __init__(self, vgg_name):
+    def __init__(self, num_classes=8, vgg_name='VGG11'):
         self.cfg = {
             'VGG11': [64, 'M', 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
             'VGG13': [64, 64, 'M', 128, 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
@@ -29,7 +49,7 @@ class VGG(nn.Module):
         }
         super(VGG, self).__init__()
         self.features = self._make_layers(self.cfg[vgg_name])
-        self.classifier = nn.Linear(512, 8)
+        self.classifier = nn.Linear(512, num_classes)
 
     def forward(self, x):
         out = self.features(x)
@@ -184,7 +204,7 @@ def trainModel(model, num_epochs, train_count, train, val, val_count, startTime,
         val_loss = 0.0
 
         best_acc = 0.0
-
+        best_loss = 1000
         for i, (images, labels) in enumerate(train):
             if torch.cuda.is_available():
                 images = Variable(images.cuda())
@@ -222,8 +242,8 @@ def trainModel(model, num_epochs, train_count, train, val, val_count, startTime,
         val_loss = val_loss / val_count
         vallog.append(val_acc)
         valloss.append(val_loss.item())
-        if best_acc < val_acc:
-            best_acc = val_acc
+        if best_loss > val_loss.item():
+            best_loss = val_loss.item()
             torch.save(model.state_dict(), 'best_checkpoint.model')
 
         print(
@@ -274,7 +294,7 @@ def trainValSplit(input, split=0.1):
 
 
 if __name__ == "__main__":
-    train_path = "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN"
+    train_path = "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged"
     test_path = "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TEST_BMP"
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -286,13 +306,13 @@ if __name__ == "__main__":
     # weightlist = [1, 10, 10, 10, 10, 10, 10, 10]
     weightlist = [1, 6.6, 16.21, 9.216, 32.44, 42.685, 4.18, 4.53]
     loss_function = nn.CrossEntropyLoss(torch.FloatTensor(weightlist))
-    num_epochs = 15
+    num_epochs = 130
     # train_count = len(glob.glob(train_path + '/**/*.BMP')) * 2
     # test_count = len(glob.glob(test_path + '/**/*.BMP')) * 2
 
-    model = ConvNet(num_classes=len(categories)).to(device)
+    model = Net(num_classes=len(categories)).to(device)
     # model = loadModel(model)
-    optimizer = Adam(model.parameters(), lr=0.005)
+    optimizer = Adam(model.parameters(), lr=0.001)
     # print("Number of training datapoints: ", train_count,
     # "\nNumber of testing datapoints: ", test_count)
     best_accuracy = 0.0
@@ -304,6 +324,6 @@ if __name__ == "__main__":
     # Evaluation on testing dataset
     predict(model, testLoader, test_path)
 
-    save = False
+    save = True
     if True:
         torch.save(model.state_dict(), 'best_checkpoint.model')
