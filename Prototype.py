@@ -7,7 +7,7 @@ import glob
 import torch.nn as nn
 from PIL import Image
 from torchvision.transforms import transforms
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, TensorDataset, random_split
 from torch.optim import Adam
 from torch.autograd import Variable
 import torchvision
@@ -129,14 +129,14 @@ def convertCat(cat):
     return cat
 
 
-def trainModel(model, num_epochs, train_count, startTime):
+def trainModel(model, num_epochs, train_count, train, startTime):
     for epoch in range(num_epochs):
 
         model.train()
         train_accuracy = 0.0
         train_loss = 0.0
 
-        for i, (images, labels) in enumerate(trainLoader):
+        for i, (images, labels) in enumerate(train):
             if torch.cuda.is_available():
                 images = Variable(images.cuda())
                 labels = Variable(labels.cuda())
@@ -181,6 +181,13 @@ def predict(model, testloader, test_path):
     saveList(textfile)
 
 
+def trainValSplit(input, split=0.2):
+    print(len(input))
+    # return random_split(input, [len(input)*1-split, len(input)*split],generator=torch.Generator().manual_seed(42))
+    return random_split(input, [10, 2], generator=torch.Generator().manual_seed(42))
+
+
+
 if __name__ == "__main__":
     train_path = "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN"
     test_path = "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TEST_BMP"
@@ -190,6 +197,7 @@ if __name__ == "__main__":
     trainLoader, testLoader = dataLoader(train_path, test_path, transformer, transformer2)
     categories = loadCategories(train_path)
 
+    train, val = trainValSplit(trainLoader)
     loss_function = nn.CrossEntropyLoss()
     num_epochs = 10
     train_count = len(glob.glob(train_path + '/**/*.BMP')) * 2
@@ -200,11 +208,12 @@ if __name__ == "__main__":
     # print("Number of training datapoints: ", train_count,
     # "\nNumber of testing datapoints: ", test_count)
 
+    print(type(train)," ",type(trainLoader))
     best_accuracy = 0.0
     startTime = time.time()
     print("Starting training phase")
     # Train model
-    trainModel(model, num_epochs, train_count, startTime)
+    trainModel(model, num_epochs, train_count, train, startTime)
 
     # Evaluation on testing dataset
     predict(model, testLoader, test_path)
