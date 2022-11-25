@@ -19,23 +19,23 @@ import math
 
 
 class Net(nn.Module):
-  def __init__(self, num_classes=8):
-      super().__init__()
-      self.conv1 = nn.Conv2d(3, 6, 8, 2)
-      self.pool = nn.MaxPool2d(2, 2)
-      self.conv2 = nn.Conv2d(6, 16, 8, 2)
-      self.fc1 = nn.Linear(16 * 6 * 6, 120)
-      self.fc2 = nn.Linear(120, 84)
-      self.fc3 = nn.Linear(84, num_classes)
+    def __init__(self, num_classes=8):
+        super().__init__()
+        self.conv1 = nn.Conv2d(3, 6, 8, 2)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(6, 16, 8, 2)
+        self.fc1 = nn.Linear(16 * 6 * 6, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, num_classes)
 
-  def forward(self, x):
-      x = self.pool(F.relu(self.conv1(x)))
-      x = self.pool(F.relu(self.conv2(x)))
-      x = torch.flatten(x, 1) # flatten all dimensions except batch
-      x = F.relu(self.fc1(x))
-      x = F.relu(self.fc2(x))
-      x = self.fc3(x)
-      return x
+    def forward(self, x):
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = torch.flatten(x, 1)  # flatten all dimensions except batch
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
+        return x
 
 
 class VGG(nn.Module):
@@ -88,8 +88,8 @@ class ConvNet(nn.Module):
         self.conv3 = nn.Conv2d(in_channels=20, out_channels=32, kernel_size=3, stride=1, padding=1)
         self.bn3 = nn.BatchNorm2d(num_features=32)
 
-        self.fc = nn.Linear(in_features=32 * 64 * 64, out_features=64*64)
-        self.fc2 = nn.Linear(in_features=64*64, out_features=1024)
+        self.fc = nn.Linear(in_features=32 * 64 * 64, out_features=64 * 64)
+        self.fc2 = nn.Linear(in_features=64 * 64, out_features=1024)
         self.fc3 = nn.Linear(in_features=1024, out_features=512)
         self.fc4 = nn.Linear(in_features=512, out_features=128)
 
@@ -116,7 +116,6 @@ class ConvNet(nn.Module):
         output = self.fc3(output)
         output = self.fc4(output)
         output = self.fco(output)
-
 
         return output
 
@@ -169,7 +168,7 @@ def saveList(listToSave):
 
 
 def loadModel(model):
-    if os.path.exists('./best_checkpoint.model'):
+    if os.path.exists('best_checkpoint.model'):
         checkpoint = torch.load('best_checkpoint.model')
         model.load_state_dict(checkpoint)
     return model
@@ -248,8 +247,9 @@ def trainModel(model, num_epochs, train_count, train, val, val_count, startTime,
 
         print(
             'Training till this point took ' + str(int(time.time() - startTime)) + ' seconds Epoch: ' + str(epoch)
-            + ' Train Loss: ' + str(train_loss.item()) +" Val_loss: "+str(val_loss.item()) +' Train Accuracy: ' + str(int(train_accuracy*100)) +
-            "% Validation Accuracy: " + str(int(val_acc*100))+"%")
+            + ' Train Loss: ' + str(train_loss.item()) + " Val_loss: " + str(
+                val_loss.item()) + ' Train Accuracy: ' + str(int(train_accuracy * 100)) +
+            "% Validation Accuracy: " + str(int(val_acc * 100)) + "%")
     plt.plot(trainlog)
     plt.plot(vallog)
     plt.show()
@@ -273,7 +273,7 @@ def predict(model, testloader, test_path):
     textfile = []
     textfile.append("Id,Category")
     for i in range(len(result)):
-        line = str(filelist[i].split("_")[0]) + ", " + str(convertCat(result[i]))
+        line = str(filelist[i].split(".")[0]) + ", " + str(convertCat(result[i]))
         textfile.append(line)
     print(textfile)
     saveList(textfile)
@@ -295,7 +295,7 @@ def trainValSplit(input, split=0.1):
 
 if __name__ == "__main__":
     train_path = "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged"
-    test_path = "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TEST_BMP"
+    test_path = "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TEST_merged"
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     transformer, transformer2 = preprocess()
@@ -304,9 +304,11 @@ if __name__ == "__main__":
 
     train, val, train_count, val_count = trainValSplit(trainLoader)
     # weightlist = [1, 10, 10, 10, 10, 10, 10, 10]
-    weightlist = [1, 6.6, 16.21, 9.216, 32.44, 42.685, 4.18, 4.53]
+    # weightlist = [1, 6.6, 16.21, 9.216, 32.44, 42.685, 4.18, 4.53]
+    weightlist = [0.6, 6.3, 16.21, 9.216, 32.44, 42.685, 4, 4.53]
+
     loss_function = nn.CrossEntropyLoss(torch.FloatTensor(weightlist))
-    num_epochs = 130
+    num_epochs = 50
     # train_count = len(glob.glob(train_path + '/**/*.BMP')) * 2
     # test_count = len(glob.glob(test_path + '/**/*.BMP')) * 2
 
