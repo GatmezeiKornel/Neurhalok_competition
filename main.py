@@ -82,7 +82,8 @@ for i in range(0, len(tmp_all_images)):
     if i % 2 == 0:
         # all_images.append([np.concatenate(tmp_all_images[i][0], tmp_all_images[i+1][0]),tmp_all_images[i][0]])
         #  all_images.append([tmp_all_images[i][0]+tmp_all_images[i+1][0], tmp_all_images[i][1]])  ez is működik
-        all_images.append([tmp_all_images[i][0], tmp_all_images[i + 1][0], tmp_all_images[i][1]])
+        # all_images.append([tmp_all_images[i][0], tmp_all_images[i + 1][0], tmp_all_images[i][1]])
+        all_images.append([np.concatenate((tmp_all_images[i][0], tmp_all_images[i + 1][0],np.zeros((128,128,1))),axis=2),tmp_all_images[i][1]])
     else:
         continue
 
