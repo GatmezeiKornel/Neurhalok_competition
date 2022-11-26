@@ -4,21 +4,6 @@ import numpy as np
 import os
 import torchvision.transforms as transforms
 
-def rotate(classes):
-    for filename in os.listdir(
-            "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_multi"):
-        with open(os.path.join("./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_multi", filename), 'r') as f:
-            image = cv.imread("./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_multi/" + filename)
-            r = cv2.imwrite(
-                "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/"+classes+"/rot1_" + filename,
-                cv.rotate(image, cv2.ROTATE_90_CLOCKWISE))
-            r = cv2.imwrite(
-                "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/"+classes+"/rot2_" + filename,
-                cv.rotate(image, cv2.ROTATE_180))
-            r = cv2.imwrite(
-                "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/"+classes+"/rot3_" + filename,
-                cv.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE))
-
 tmp_all_images = []
 all_images = []
 for filename in os.listdir(
@@ -141,5 +126,45 @@ for i in range(0, len(tmp_all_images)):
 #
 # print(all_images)
 
-# rotate("chl_multi")
-rotate("chl_8")
+# rotate = transforms.RandomRotation(degrees=(0, 90))
+
+# for filename in os.listdir(
+#         "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_multi"):
+#     with open(os.path.join(
+#             "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_multi",
+#             filename), 'r') as f:
+#         image = cv.imread(
+#             "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_multi/" + filename)
+#         # tmp_all_images.append([image, "chl_multi", filename])
+#         # rotated_imgs = rotate(image)
+#         # cv.imshow(rotated_imgs)
+#         r = cv2.imwrite("./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_multi/rot1_" + filename, cv.rotate(image, cv2.ROTATE_90_CLOCKWISE))
+#         r = cv2.imwrite("./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_multi/rot2_" + filename, cv.rotate(image, cv2.ROTATE_180))
+#         r = cv2.imwrite("./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_multi/rot3_" + filename, cv.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE))
+
+# for filename in os.listdir(
+#         "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_8"):
+#     with open(os.path.join(
+#             "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_8",
+#             filename), 'r') as f:
+#         image = cv.imread(
+#             "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_8/" + filename)
+#         # tmp_all_images.append([image, "chl_multi", filename])
+#         # rotated_imgs = rotate(image)
+#         # cv.imshow(rotated_imgs)
+#         r = cv2.imwrite("./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_8/rot1_" + filename, cv.rotate(image, cv2.ROTATE_90_CLOCKWISE))
+#         r = cv2.imwrite("./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_8/rot2_" + filename, cv.rotate(image, cv2.ROTATE_180))
+#         r = cv2.imwrite("./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_8/rot3_" + filename, cv.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE))
+for filename in os.listdir(
+        "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_3"):
+    with open(os.path.join(
+            "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_3",
+            filename), 'r') as f:
+        image = cv.imread(
+            "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_3/" + filename)
+        # tmp_all_images.append([image, "chl_multi", filename])
+        # rotated_imgs = rotate(image)
+        # cv.imshow(rotated_imgs)
+        r = cv2.imwrite("./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_3/rot1_" + filename, cv.rotate(image, cv2.ROTATE_90_CLOCKWISE))
+        r = cv2.imwrite("./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_3/rot2_" + filename, cv.rotate(image, cv2.ROTATE_180))
+        r = cv2.imwrite("./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_3/rot3_" + filename, cv.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE))
