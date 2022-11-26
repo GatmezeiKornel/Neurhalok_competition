@@ -316,7 +316,7 @@ if __name__ == "__main__":
     # test_count = len(glob.glob(test_path + '/**/*.BMP')) * 2
 
     model = Net(num_classes=len(categories)).to(device)
-    # model = loadModel(model)
+    model = loadModel(model)
     optimizer = Adam(model.parameters(), lr=0.001)
     # print("Number of training datapoints: ", train_count,
     # "\nNumber of testing datapoints: ", test_count)
@@ -329,6 +329,6 @@ if __name__ == "__main__":
     # Evaluation on testing dataset
     predict(model, testLoader, test_path)
 
-    save = True
-    if True:
+    save = False
+    if save:
         torch.save(model.state_dict(), 'best_checkpoint.model')
