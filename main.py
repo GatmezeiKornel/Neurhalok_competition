@@ -2,6 +2,22 @@ import cv2
 import cv2 as cv
 import numpy as np
 import os
+import torchvision.transforms as transforms
+
+def rotate(classes):
+    for filename in os.listdir(
+            "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_multi"):
+        with open(os.path.join("./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_multi", filename), 'r') as f:
+            image = cv.imread("./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_multi/" + filename)
+            r = cv2.imwrite(
+                "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/"+classes+"/rot1_" + filename,
+                cv.rotate(image, cv2.ROTATE_90_CLOCKWISE))
+            r = cv2.imwrite(
+                "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/"+classes+"/rot2_" + filename,
+                cv.rotate(image, cv2.ROTATE_180))
+            r = cv2.imwrite(
+                "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/"+classes+"/rot3_" + filename,
+                cv.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE))
 
 tmp_all_images = []
 all_images = []
@@ -104,9 +120,9 @@ for i in range(0, len(TEST_tmp)):
                                           axis=2) / 255, TEST_tmp[i][1].split('_')[0]])
     else:
         continue
-for i in range(0, len(TEST_all)):
-    actual_image_name = TEST_all[i][1]
-    r = cv2.imwrite("./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TEST_merged/" + actual_image_name + '.png', TEST_all[i][0] * 255)
+# for i in range(0, len(TEST_all)):
+#     actual_image_name = TEST_all[i][1]
+#     r = cv2.imwrite("./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TEST_merged/" + actual_image_name + '.png', TEST_all[i][0] * 255)
 
 
 for i in range(0, len(tmp_all_images)):
@@ -119,8 +135,11 @@ for i in range(0, len(tmp_all_images)):
                                           axis=2) / 255, tmp_all_images[i][1], tmp_all_images[i][2].split('_')[0]])
     else:
         continue
-for i in range(0, len(all_images)):
-    actual_image_name = all_images[i][2]
-    r = cv2.imwrite("./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/" + all_images[i][1] + "/" + actual_image_name + '.png', all_images[i][0] * 255)
+# for i in range(0, len(all_images)):
+#     actual_image_name = all_images[i][2]
+#     r = cv2.imwrite("./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/" + all_images[i][1] + "/" + actual_image_name + '.png', all_images[i][0] * 255)
+#
+# print(all_images)
 
-print(all_images)
+# rotate("chl_multi")
+rotate("chl_8")
