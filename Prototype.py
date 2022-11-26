@@ -308,7 +308,7 @@ if __name__ == "__main__":
     weightlist = [0.6, 6.3, 16.21, 9.216, 32.44, 42.685, 4, 4.53]
 
     loss_function = nn.CrossEntropyLoss(torch.FloatTensor(weightlist))
-    num_epochs = 50
+    num_epochs = 150
     # train_count = len(glob.glob(train_path + '/**/*.BMP')) * 2
     # test_count = len(glob.glob(test_path + '/**/*.BMP')) * 2
 
