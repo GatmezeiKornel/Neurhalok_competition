@@ -38,43 +38,6 @@ class Net(nn.Module):
         return x
 
 
-class VGG(nn.Module):
-    def __init__(self, num_classes=8, vgg_name='VGG11'):
-        self.cfg = {
-            'VGG11': [64, 'M', 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
-            'VGG13': [64, 64, 'M', 128, 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
-            'VGG16': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512, 'M', 512, 512, 512, 'M'],
-            'VGG19': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 256, 'M', 512, 512, 512, 512, 'M', 512, 512, 512, 512,
-                      'M'],
-        }
-        super(VGG, self).__init__()
-        self.features = self._make_layers(self.cfg[vgg_name])
-        self.classifier = nn.Linear(512, num_classes)
-
-    def forward(self, x):
-        out = self.features(x)
-        out = out.view(out.size(0), -1)
-        out = self.classifier(out)
-        return out
-
-    # This method will generate us all of layers
-    # of VGG according to the cfg which now is
-    # a list of numbers and 'M' charachters
-    def _make_layers(self, cfg):
-        layers = []
-        in_channels = 2
-        for x in cfg:
-            if x == 'M':
-                layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
-            else:
-                layers += [nn.Conv2d(in_channels, x, kernel_size=3, padding=1),
-                           nn.BatchNorm2d(x),
-                           nn.ReLU(inplace=True)]
-                in_channels = x
-        layers.append(nn.AvgPool2d(kernel_size=1, stride=1))
-        return nn.Sequential(*layers)
-
-
 class ConvNet(nn.Module):
     def __init__(self, num_classes=6):
         super(ConvNet, self).__init__()
@@ -149,7 +112,7 @@ def dataLoader(train_path, test_path, transformer, transformer2=None):
     )
     test_loader = DataLoader(
         torchvision.datasets.ImageFolder(test_path, transform=transformer2)
-        # , batch_size=256, shuffle=True
+
     )
     return train_loader, test_loader
 
@@ -189,11 +152,19 @@ def convertCat(cat):
     return cat
 
 
-def trainModel(model, num_epochs, train_count, train, val, val_count, startTime, loss):
+def trainModel(model, num_epochs, train_count, train, val, val_count, startTime, loss, optimizer):
     trainlog = []
     vallog = []
     trainloss = []
     valloss = []
+    lr = []
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer=optimizer,
+        mode="min",
+        factor=0.8,
+        patience=10,
+        threshold=0.001
+    )
     for epoch in range(num_epochs):
         model.train()
         train_accuracy = 0.0
@@ -203,7 +174,7 @@ def trainModel(model, num_epochs, train_count, train, val, val_count, startTime,
         val_loss = 0.0
 
         best_acc = 0.0
-        best_loss = 1000
+        best_loss = 1.0
         for i, (images, labels) in enumerate(train):
             if torch.cuda.is_available():
                 images = Variable(images.cuda())
@@ -249,7 +220,12 @@ def trainModel(model, num_epochs, train_count, train, val, val_count, startTime,
             'Training till this point took ' + str(int(time.time() - startTime)) + ' seconds Epoch: ' + str(epoch)
             + ' Train Loss: ' + str(train_loss.item()) + " Val_loss: " + str(
                 val_loss.item()) + ' Train Accuracy: ' + str(int(train_accuracy * 100)) +
-            "% Validation Accuracy: " + str(int(val_acc * 100)) + "%")
+            "% Validation Accuracy: " + str(int(val_acc * 100)) + "% Learning rate: "+str(optimizer.param_groups[0]['lr']))
+        lr.append(optimizer.param_groups[0]['lr'])
+        scheduler.step(val_loss.item())
+
+    plt.plot(lr)
+    plt.show()
     plt.plot(trainlog)
     plt.plot(vallog)
     plt.show()
@@ -279,7 +255,7 @@ def predict(model, testloader, test_path):
     saveList(textfile)
 
 
-def trainValSplit(input, split=0.1):
+def trainValSplit(input, split=0.2):
     original = len(input.dataset)
 
     vallen = int(math.floor(original * split))
@@ -306,29 +282,24 @@ if __name__ == "__main__":
     # weightlist = [1, 10, 10, 10, 10, 10, 10, 10]
     # weightlist = [1, 6.6, 16.21, 9.216, 32.44, 42.685, 4.18, 4.53]
     # weightlist = [0.6, 6.3, 16.21, 9.216, 32.44, 42.685, 4, 4.53]
-    # weightlist = [1, 6.6, 8.11, 9.216, 16.22, 21.34, 4.18, 4.53]
+    weightlist = [1, 6.6, 8.11, 9.216, 16.22, 21.34, 4.18, 4.53]
     # weightlist = [1, 6.6, 8.11, 9.216, 8.11, 10.67, 4.18, 4.53]
-    weightlist = [1, 6.6, 4.055, 4.61, 4.055, 5.34, 4.18, 4.53]
+    # weightlist = [1, 6.6, 4.055, 4.61, 4.055, 5.34, 4.18, 4.53]
 
     loss_function = nn.CrossEntropyLoss(torch.FloatTensor(weightlist))
-    num_epochs = 150
-    # train_count = len(glob.glob(train_path + '/**/*.BMP')) * 2
-    # test_count = len(glob.glob(test_path + '/**/*.BMP')) * 2
+    num_epochs = 200
 
     model = Net(num_classes=len(categories)).to(device)
-    model = loadModel(model)
-    optimizer = Adam(model.parameters(), lr=0.001)
-    # print("Number of training datapoints: ", train_count,
-    # "\nNumber of testing datapoints: ", test_count)
+    # model = loadModel(model)
+    optimizer = Adam(model.parameters(), lr=0.005)
+
     best_accuracy = 0.0
     startTime = time.time()
     print("Starting training phase")
     # Train model
-    trainModel(model, num_epochs, train_count, trainLoader, val, val_count, startTime, loss_function)
+    trainModel(model, num_epochs, train_count, trainLoader, val, val_count, startTime, loss_function, optimizer)
 
     # Evaluation on testing dataset
     predict(model, testLoader, test_path)
 
-    save = False
-    if save:
-        torch.save(model.state_dict(), 'best_checkpoint.model')
+
