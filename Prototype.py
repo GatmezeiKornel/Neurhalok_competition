@@ -102,7 +102,7 @@ def preprocess():
     return transformer, transformer2
 
 
-def dataLoader(train_path, test_path, transformer, transformer2=None):
+def dataLoader(train_path, test_path, validation_path, transformer, transformer2=None):
     if transformer2 is None:
         transformer2 = transformer
 
@@ -114,7 +114,11 @@ def dataLoader(train_path, test_path, transformer, transformer2=None):
         torchvision.datasets.ImageFolder(test_path, transform=transformer2)
 
     )
-    return train_loader, test_loader
+    val_loader = DataLoader(
+        torchvision.datasets.ImageFolder(validation_path, transform=transformer2)
+
+    )
+    return train_loader, test_loader, val_loader
 
 
 def loadCategories(path):
@@ -190,6 +194,7 @@ def trainModel(model, num_epochs, train_count, train, val, val_count, startTime,
             train_loss += loss.cpu().data * images.size(0)
             _, prediction = torch.max(outputs.data, 1)
 
+            # acc= calculate_accuracy(outputs, labels)
             train_accuracy += int(torch.sum(prediction == labels.data))
 
         # print(train_accuracy, " ", train_count)
@@ -270,21 +275,22 @@ def trainValSplit(input, split=0.2):
 
 
 if __name__ == "__main__":
-    train_path = "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged"
+    train_path = "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged_actualtrain"
+    validation_path = "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged_valid"
     test_path = "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TEST_merged"
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     transformer, transformer2 = preprocess()
-    trainLoader, testLoader = dataLoader(train_path, test_path, transformer, transformer2)
+    trainLoader, testLoader, valLoader = dataLoader(train_path, test_path,validation_path, transformer, transformer2)
     categories = loadCategories(train_path)
 
     train, val, train_count, val_count = trainValSplit(trainLoader)
     # weightlist = [1, 10, 10, 10, 10, 10, 10, 10]
     # weightlist = [1, 6.6, 16.21, 9.216, 32.44, 42.685, 4.18, 4.53]
     # weightlist = [0.6, 6.3, 16.21, 9.216, 32.44, 42.685, 4, 4.53]
-    weightlist = [1, 6.6, 8.11, 9.216, 16.22, 21.34, 4.18, 4.53]
+    # weightlist = [1, 6.6, 8.11, 9.216, 16.22, 21.34, 4.18, 4.53]
     # weightlist = [1, 6.6, 8.11, 9.216, 8.11, 10.67, 4.18, 4.53]
-    # weightlist = [1, 6.6, 4.055, 4.61, 4.055, 5.34, 4.18, 4.53]
+    weightlist = [1, 6.6, 4.055, 4.61, 4.055, 5.34, 4.18, 4.53]
 
     # loss_function = nn.CrossEntropyLoss(torch.FloatTensor(weightlist))
     loss_function = nn.CrossEntropyLoss()
@@ -298,7 +304,7 @@ if __name__ == "__main__":
     startTime = time.time()
     print("Starting training phase")
     # Train model
-    trainModel(model, num_epochs, train_count, trainLoader, val, val_count, startTime, loss_function, optimizer)
+    trainModel(model, num_epochs, train_count, trainLoader, valLoader, len(valLoader.dataset), startTime, loss_function, optimizer)
 
     # Evaluation on testing dataset
     predict(model, testLoader, test_path)
