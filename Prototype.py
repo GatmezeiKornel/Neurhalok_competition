@@ -305,7 +305,8 @@ if __name__ == "__main__":
     train, val, train_count, val_count = trainValSplit(trainLoader)
     # weightlist = [1, 10, 10, 10, 10, 10, 10, 10]
     # weightlist = [1, 6.6, 16.21, 9.216, 32.44, 42.685, 4.18, 4.53]
-    weightlist = [0.6, 6.3, 16.21, 9.216, 32.44, 42.685, 4, 4.53]
+    # weightlist = [0.6, 6.3, 16.21, 9.216, 32.44, 42.685, 4, 4.53]
+    weightlist = [1, 6.6, 8.11, 9.216, 16.22, 21.34, 4.18, 4.53]
 
     loss_function = nn.CrossEntropyLoss(torch.FloatTensor(weightlist))
     num_epochs = 150
