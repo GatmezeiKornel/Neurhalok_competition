@@ -155,16 +155,57 @@ for i in range(0, len(tmp_all_images)):
 #         r = cv2.imwrite("./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_8/rot1_" + filename, cv.rotate(image, cv2.ROTATE_90_CLOCKWISE))
 #         r = cv2.imwrite("./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_8/rot2_" + filename, cv.rotate(image, cv2.ROTATE_180))
 #         r = cv2.imwrite("./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_8/rot3_" + filename, cv.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE))
+# for filename in os.listdir(
+#         "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_3"):
+#     with open(os.path.join(
+#             "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_3",
+#             filename), 'r') as f:
+#         image = cv.imread(
+#             "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_3/" + filename)
+#         # tmp_all_images.append([image, "chl_multi", filename])
+#         # rotated_imgs = rotate(image)
+#         # cv.imshow(rotated_imgs)
+#         r = cv2.imwrite("./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_3/rot1_" + filename, cv.rotate(image, cv2.ROTATE_90_CLOCKWISE))
+#         r = cv2.imwrite("./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_3/rot2_" + filename, cv.rotate(image, cv2.ROTATE_180))
+#         r = cv2.imwrite("./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_3/rot3_" + filename, cv.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE))
+
+# for filename in os.listdir(
+#         "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_multi"):
+#     with open(os.path.join(
+#             "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_multi",
+#             filename), 'r') as f:
+#         image = cv.imread(
+#             "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_multi/" + filename)
+#         lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+#         l_channel, a, b = cv2.split(lab)
+#         clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(7, 7))
+#         cl = clahe.apply(l_channel)
+#         limg = cv2.merge((cl, a, b))
+#         enhanced_img = cv2.cvtColor(limg, cv2.COLOR_LAB2BGR)
+#         r = cv2.imwrite("./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_multi/contrast_" + filename, enhanced_img)
+# for filename in os.listdir(
+#         "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_8"):
+#     with open(os.path.join(
+#             "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_8",
+#             filename), 'r') as f:
+#         image = cv.imread(
+#             "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_8/" + filename)
+#         lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+#         l_channel, a, b = cv2.split(lab)
+#         clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(7, 7))
+#         cl = clahe.apply(l_channel)
+#         limg = cv2.merge((cl, a, b))
+#         enhanced_img = cv2.cvtColor(limg, cv2.COLOR_LAB2BGR)
+#         r = cv2.imwrite("./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_8/contrast_" + filename, enhanced_img)
+
 for filename in os.listdir(
-        "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_3"):
+        "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_4"):
     with open(os.path.join(
-            "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_3",
+            "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_4",
             filename), 'r') as f:
         image = cv.imread(
-            "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_3/" + filename)
+            "./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_4/" + filename)
         # tmp_all_images.append([image, "chl_multi", filename])
         # rotated_imgs = rotate(image)
         # cv.imshow(rotated_imgs)
-        r = cv2.imwrite("./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_3/rot1_" + filename, cv.rotate(image, cv2.ROTATE_90_CLOCKWISE))
-        r = cv2.imwrite("./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_3/rot2_" + filename, cv.rotate(image, cv2.ROTATE_180))
-        r = cv2.imwrite("./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_3/rot3_" + filename, cv.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE))
+        r = cv2.imwrite("./ppke-itk-neural-networks-2022-challenge/db_chlorella_renamed_TRAIN_merged/chl_4/rot1_" + filename, cv.rotate(image, cv2.ROTATE_90_CLOCKWISE))
