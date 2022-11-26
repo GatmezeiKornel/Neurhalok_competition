@@ -286,8 +286,9 @@ if __name__ == "__main__":
     # weightlist = [1, 6.6, 8.11, 9.216, 8.11, 10.67, 4.18, 4.53]
     # weightlist = [1, 6.6, 4.055, 4.61, 4.055, 5.34, 4.18, 4.53]
 
-    loss_function = nn.CrossEntropyLoss(torch.FloatTensor(weightlist))
-    num_epochs = 100
+    # loss_function = nn.CrossEntropyLoss(torch.FloatTensor(weightlist))
+    loss_function = nn.CrossEntropyLoss()
+    num_epochs = 150
 
     model = Net(num_classes=len(categories)).to(device)
     # model = loadModel(model)
